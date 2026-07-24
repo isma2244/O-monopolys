@@ -1,4 +1,4 @@
-const CACHE = 'o-monopolis-ultra-v3-20260724-2';
+const CACHE = 'o-monopolis-v4-1-cartinas-caixa-20260724-1';
 const ASSETS = [
   './',
   './index.html',

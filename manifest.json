@@ -1,7 +1,7 @@
 {
-  "name": "O Monopolis Ultra Multiplayer",
+  "name": "O Monopolis V4.1 Cartiñas Caixa",
   "short_name": "O Monopolis",
-  "description": "PWA multijugador ultra de O Monopolis.",
+  "description": "PWA multijugador con Cartiñas y Caixa Veciñal corregidas.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

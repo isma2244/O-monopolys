@@ -12,6 +12,9 @@ let state = null;
 let zoomed = false;
 let audioCtx = null;
 let soundEnabled = localStorage.getItem('monopolis.sound') !== 'off';
+let lastLandingShown = 0;
+let lastPurchaseShown = 0;
+let currentDisplayMode = localStorage.getItem('monopolis.displayMode') || 'full';
 
 let myPlayerId = localStorage.getItem('monopolis.playerId') || crypto.randomUUID();
 localStorage.setItem('monopolis.playerId', myPlayerId);
@@ -64,6 +67,9 @@ function boot() {
     $('joinCode').value = join.toUpperCase();
     switchMode('join');
   }
+  const viewMode = params.get('view');
+  if (viewMode === 'host' || viewMode === 'player' || viewMode === 'full') currentDisplayMode = viewMode;
+  setDisplayMode(currentDisplayMode);
 
   $('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
   resizeFxCanvas();
@@ -88,6 +94,11 @@ function bind() {
   $('endTurnBtn').onclick = endTurn;
   $('bankAddBtn').onclick = () => manualBank(+$('bankAmount').value || 0);
   $('bankSubBtn').onclick = () => manualBank(-(+$('bankAmount').value || 0));
+  $('moneyDeckBtn').onclick = () => { if (isMyTurn()) drawMoney(); };
+  $('eventDeckBtn').onclick = () => { if (isMyTurn()) drawEvent(); };
+  $('modeFullBtn').onclick = () => setDisplayMode('full');
+  $('modePlayerBtn').onclick = () => setDisplayMode('player');
+  $('modeHostBtn').onclick = () => setDisplayMode('host');
   $('fitBoardBtn').onclick = fitBoardToMe;
   $('zoomBoardBtn').onclick = toggleZoom;
   $('closeModalBtn').onclick = closeModal;
@@ -104,6 +115,18 @@ function bind() {
       rollDice();
     }
   });
+}
+
+function setDisplayMode(mode='full') {
+  currentDisplayMode = mode;
+  localStorage.setItem('monopolis.displayMode', mode);
+  document.body.classList.toggle('mode-player', mode === 'player');
+  document.body.classList.toggle('mode-host', mode === 'host');
+  ['modeFullBtn','modePlayerBtn','modeHostBtn'].forEach(id => {
+    const el = $(id);
+    if (el) el.classList.toggle('active', id.toLowerCase().includes(mode));
+  });
+  if (mode !== 'player') setTimeout(fitBoardToMe, 150);
 }
 
 function populateTokens() {
@@ -213,6 +236,9 @@ function newState(hostName, token) {
     properties: {},
     decks: { event: shuffle(EVENT_CARDS), money: shuffle(MONEY_CARDS) },
     drawn: null,
+    freePot: 0,
+    lastLanding: null,
+    lastPurchase: null,
     log: [`${now()} · ${player.name} creou a partida`]
   };
 }
@@ -222,6 +248,9 @@ function normalizeState(s) {
   s.players ||= [];
   s.currentTurn ||= 0;
   s.properties ||= {};
+  s.freePot ||= 0;
+  s.lastLanding ||= null;
+  s.lastPurchase ||= null;
   s.decks ||= {};
   if (!Array.isArray(s.decks.event) || s.decks.event.length === 0) s.decks.event = shuffle(EVENT_CARDS);
   if (!Array.isArray(s.decks.money) || s.decks.money.length === 0) s.decks.money = shuffle(MONEY_CARDS);
@@ -303,6 +332,8 @@ async function subscribe(gameId) {
       if (!payload.new) return;
       const prevTurn = currentPlayer()?.id;
       const prevRoll = state?.lastRoll?.join('-');
+      const prevLandingTs = state?.lastLanding?.ts || 0;
+      const prevPurchaseTs = state?.lastPurchase?.ts || 0;
       gameRow = payload.new;
       state = normalizeState(payload.new.state);
       setConnection('sincronizado', 'online');
@@ -316,6 +347,12 @@ async function subscribe(gameId) {
           playSfx('turn');
         }
         if (newRoll && newRoll !== prevRoll) animateDice(state.lastRoll[0], state.lastRoll[1]);
+        if ((state.lastLanding?.ts || 0) > prevLandingTs && (state.lastLanding?.ts || 0) > lastLandingShown) {
+          showLandingZoom(state.lastLanding);
+        }
+        if ((state.lastPurchase?.ts || 0) > prevPurchaseTs && (state.lastPurchase?.ts || 0) > lastPurchaseShown) {
+          showPropertyCardModal(state.lastPurchase.propertyId, state.lastPurchase.playerName);
+        }
       }
     })
     .subscribe(status => setConnection(status === 'SUBSCRIBED' ? 'online' : status.toLowerCase(), status === 'SUBSCRIBED' ? 'online' : 'muted'));
@@ -447,6 +484,7 @@ function renderGame() {
   renderSpacePanel();
   renderBankSelect();
   renderTradeSelects();
+  renderDecks();
   renderProperties();
   renderLog();
 }
@@ -500,6 +538,7 @@ function renderMyStatus() {
       ${p.skipTurns ? `<span class="badge red">⏳ perde ${p.skipTurns}</span>` : ''}
       ${p.bankrupt ? `<span class="badge red">💀 bancarrota</span>` : ''}
     </div>
+    <div class="pot-display"><span>🏛️ Bote Casa do Pobo</span><strong>${fmt(state.freePot || 0)}</strong></div>
     ${p.keptCards?.length ? `<div class="prop-item"><strong>Cartas gardadas</strong><span class="meta">${p.keptCards.map(escapeHtml).join(', ')}</span></div>` : ''}
   `;
 }
@@ -609,11 +648,20 @@ function renderSpacePanel() {
       }
     }
   } else if (space.type === 'event') {
-    html += `<p class="muted">Colle unha carta de eventos.</p>`;
+    html += `<p class="muted">Cartiña de eventos: colle unha carta do mazo de eventos.</p>`;
     actions.push(`<button onclick="window.gameActions.drawEvent()">Coller Evento</button>`);
   } else if (space.type === 'caixa') {
-    html += `<p class="muted">Colle unha carta de diñeiro.</p>`;
+    html += `<p class="muted">Cartiña de diñeiro: colle unha carta do mazo co símbolo €.</p>`;
     actions.push(`<button onclick="window.gameActions.drawMoney()">Coller Diñeiro</button>`);
+  } else if (space.type === 'fee') {
+    const fee = space.fee || 1500;
+    html += `<p class="muted">Caixa Veciñal: aquí págase ${fmt(fee)} ao bote da Casa do Pobo.</p>`;
+    html += `<div class="pot-display"><span>Pago desta casilla</span><strong>${fmt(fee)}</strong></div>`;
+  } else if (space.type === 'parking') {
+    html += `<p class="muted">Casa do Pobo: quen cae aquí cobra o bote acumulado das multas e contribucións.</p>`;
+    html += `<div class="pot-display"><span>Bote actual</span><strong>${fmt(state.freePot || 0)}</strong></div>`;
+  } else if (space.id === 'campo-futbol') {
+    html += `<p class="muted">Caer aquí de normal é pachanga no Campo de Fútbol: non pasa nada. Só perdes quendas se te manda o Rumano á granxa.</p>`;
   } else if (space.type === 'go') {
     html += `<p class="muted">Ao pasar por Piornedo cóbranse ${fmt(PASS_GO_AMOUNT)}.</p>`;
   } else if (space.type === 'service') {
@@ -632,6 +680,17 @@ function renderSpacePanel() {
 
 function renderBankSelect() {
   $('bankPlayer').innerHTML = state.players.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+}
+
+function renderDecks() {
+  const ev = $('eventDeckCount');
+  const mo = $('moneyDeckCount');
+  if (ev) ev.textContent = `${state.decks?.event?.length || 0} cartas`;
+  if (mo) mo.textContent = `${state.decks?.money?.length || 0} cartas`;
+  const canDrawEvent = isMyTurn() && currentSpace()?.type === 'event';
+  const canDrawMoney = isMyTurn() && currentSpace()?.type === 'caixa';
+  if ($('eventDeckBtn')) $('eventDeckBtn').disabled = !canDrawEvent;
+  if ($('moneyDeckBtn')) $('moneyDeckBtn').disabled = !canDrawMoney;
 }
 
 function renderProperties() {
@@ -685,6 +744,126 @@ function moveTo(p, spaceId, passGo=false) {
   p.position = target;
 }
 
+
+function applyLandingEffects(p, fromCard=false) {
+  const space = BOARD[p.position];
+  if (!space) return;
+
+  if (space.type === 'fee') {
+    const fee = space.fee || 1500;
+    p.money -= fee;
+    state.freePot = (state.freePot || 0) + fee;
+    log(`${p.name} cae en Caixa Veciñal e paga ${fmt(fee)} ao bote da Casa do Pobo`);
+    playSfx('pay');
+    haptic([20, 30, 20]);
+  }
+
+  if (space.type === 'parking') {
+    const pot = state.freePot || 0;
+    if (pot > 0) {
+      p.money += pot;
+      state.freePot = 0;
+      log(`${p.name} chega á Casa do Pobo e cobra o bote de ${fmt(pot)}`);
+      confettiBurst(90);
+      playSfx('win');
+    } else {
+      log(`${p.name} chega á Casa do Pobo, pero o bote está baleiro`);
+    }
+  }
+
+  if (space.id === 'campo-futbol' && !fromCard) {
+    log(`${p.name} cae no Campo de Fútbol e bota unha pachanga`);
+  }
+}
+
+function consumeFarmEscapeCard(p) {
+  const cards = p.keptCards || [];
+  const idx = cards.findIndex(c => /granxa|alcalde|Libre/i.test(c));
+  if (idx < 0) return null;
+  const [card] = cards.splice(idx, 1);
+  return card;
+}
+
+function showLandingZoom(landing) {
+  if (!landing || !BOARD[landing.position]) return;
+  lastLandingShown = landing.ts || Date.now();
+  if (currentDisplayMode === 'player') {
+    toast(`${landing.playerName || 'Xogador'} cae en ${landing.spaceName || BOARD[landing.position].name}`);
+    return;
+  }
+
+  const space = BOARD[landing.position];
+  const overlay = $('landingZoom');
+  const viewport = $('landingViewport');
+  const title = $('landingTitle');
+  const subtitle = $('landingSubtitle');
+  if (!overlay || !viewport) return;
+
+  viewport.style.backgroundPosition = `${space.x}% ${space.y}%`;
+  title.textContent = space.name;
+  subtitle.textContent = `${landing.playerName || 'Xogador'} chegou aquí`;
+  overlay.classList.remove('hidden');
+  haptic(16);
+  clearTimeout(showLandingZoom._t);
+  showLandingZoom._t = setTimeout(() => overlay.classList.add('hidden'), 2450);
+}
+
+function groupColorClass(group) {
+  return group ? `group-${group}` : '';
+}
+
+function propertyCardHTML(id, ownerName='') {
+  const data = PROPERTY_DATA[id] || STATION_DATA[id];
+  if (!data) return '<p>Propiedade non atopada.</p>';
+
+  if (STATION_DATA[id]) {
+    return `<div class="property-card-preview station">
+      <div class="card-band">ESTACIÓN</div>
+      <div class="card-body">
+        <h3>${escapeHtml(data.name)}</h3>
+        <div class="rent-row"><span>Prezo</span><strong>${fmt(data.price)}</strong></div>
+        <div class="rent-row"><span>Hipoteca</span><strong>${fmt(data.mortgage)}</strong></div>
+        <div class="rent-row"><span>1 estación</span><strong>${fmt(data.rents[0])}</strong></div>
+        <div class="rent-row"><span>2 estacións</span><strong>${fmt(data.rents[1])}</strong></div>
+        <div class="rent-row"><span>3 estacións</span><strong>${fmt(data.rents[2])}</strong></div>
+        <div class="rent-row"><span>4 estacións</span><strong>${fmt(data.rents[3])}</strong></div>
+        ${ownerName ? `<span class="owner-chip">👤 ${escapeHtml(ownerName)}</span>` : ''}
+      </div>
+    </div>`;
+  }
+
+  return `<div class="property-card-preview">
+    <div class="card-band ${groupColorClass(data.group)}">${escapeHtml(data.name)}</div>
+    <div class="card-body">
+      <div class="rent-row"><span>Prezo</span><strong>${fmt(data.price)}</strong></div>
+      <div class="rent-row"><span>Aluguer</span><strong>${fmt(data.rents[0])}</strong></div>
+      <div class="rent-row"><span>1 casa</span><strong>${fmt(data.rents[1])}</strong></div>
+      <div class="rent-row"><span>2 casas</span><strong>${fmt(data.rents[2])}</strong></div>
+      <div class="rent-row"><span>3 casas</span><strong>${fmt(data.rents[3])}</strong></div>
+      <div class="rent-row"><span>4 casas</span><strong>${fmt(data.rents[4])}</strong></div>
+      <div class="rent-row"><span>Hotel</span><strong>${fmt(data.rents[5])}</strong></div>
+      <div class="rent-row"><span>Hipoteca</span><strong>${fmt(data.mortgage)}</strong></div>
+      <div class="rent-row"><span>Casa / hotel</span><strong>${fmt(data.houseCost)}</strong></div>
+      ${ownerName ? `<span class="owner-chip">👤 ${escapeHtml(ownerName)}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function showPropertyCardModal(id, ownerName='') {
+  const data = PROPERTY_DATA[id] || STATION_DATA[id];
+  if (!data) return;
+  lastPurchaseShown = state?.lastPurchase?.ts || Date.now();
+  $('modalKind').textContent = 'TÍTULO DE PROPIEDADE';
+  $('modalTitle').textContent = data.name;
+  $('modalText').innerHTML = propertyCardHTML(id, ownerName);
+  $('modalVisual').textContent = STATION_DATA[id] ? '🚉' : '🏠';
+  const modal = $('cardModal');
+  modal.classList.remove('hidden');
+  modal.classList.remove('flip-enter');
+  void modal.offsetWidth;
+  modal.classList.add('flip-enter');
+}
+
 async function rollDice() {
   if (!isMyTurn() || state.hasRolled) return;
   const p = currentPlayer();
@@ -710,10 +889,13 @@ async function rollDice() {
   state.hasRolled = true;
   state.drawn = null;
   movePlayer(p, d1+d2);
+  applyLandingEffects(p, false);
+  state.lastLanding = { position:p.position, playerId:p.id, playerName:p.name, spaceName:BOARD[p.position].name, ts:Date.now() };
 
   log(`${p.name} tira ${d1}+${d2} e cae en ${BOARD[p.position].name}`);
   await saveState();
   setTimeout(fitBoardToMe, 500);
+  setTimeout(() => showLandingZoom(state.lastLanding), 180);
 }
 
 function animateDice(d1, d2) {
@@ -772,10 +954,12 @@ async function buyCurrent() {
   if (p.money < data.price) return toast('Non tes cartos suficientes');
   p.money -= data.price;
   state.properties[id] = { ownerId:p.id, mortgaged:false, houses:0 };
+  state.lastPurchase = { propertyId:id, playerId:p.id, playerName:p.name, ts:Date.now() };
   log(`${p.name} compra ${data.name} por ${fmt(data.price)}`);
   playSfx('buy');
   haptic([20, 25, 20]);
   confettiBurst();
+  showPropertyCardModal(id, p.name);
   await saveState();
 }
 
@@ -891,13 +1075,15 @@ function drawFromDeck(kind) {
   if (kind === 'money') {
     if (card.amount) {
       p.money += card.amount;
+      if (card.amount < 0) state.freePot = (state.freePot || 0) + Math.abs(card.amount);
       state.drawn = { kind:'DIÑEIRO', text:card.text, amount:card.amount };
-      log(`${p.name}: ${card.text} ${card.amount > 0 ? 'Cobra' : 'Paga'} ${fmt(Math.abs(card.amount))}`);
+      log(`${p.name}: ${card.text} ${card.amount > 0 ? 'Cobra' : 'Paga'} ${fmt(Math.abs(card.amount))}${card.amount < 0 ? ' ao bote da Casa do Pobo' : ''}`);
       if (card.amount > 0) confettiBurst(35);
     } else if (card.each) {
       for (const pl of state.players) pl.money += card.each;
+      if (card.each < 0) state.freePot = (state.freePot || 0) + Math.abs(card.each) * state.players.filter(pl => !pl.bankrupt).length;
       state.drawn = { kind:'DIÑEIRO', text:card.text, amount:card.each };
-      log(`${card.text} ${fmt(Math.abs(card.each))} por persoa`);
+      log(`${card.text} ${fmt(Math.abs(card.each))} por persoa${card.each < 0 ? ' ao bote da Casa do Pobo' : ''}`);
     }
     showCardModal('DIÑEIRO', card.amount || card.each || 0, card.text);
     return;
@@ -914,14 +1100,31 @@ function applyEvent(card, p) {
   if (a.type === 'moveTo') {
     moveTo(p, a.spaceId, a.passGo);
     if (a.skip) p.skipTurns += a.skip;
+    applyLandingEffects(p, true);
+    state.lastLanding = { position:p.position, playerId:p.id, playerName:p.name, spaceName:BOARD[p.position].name, ts:Date.now() };
     log(`${p.name}: ${card.text}`);
   } else if (a.type === 'moveToPay') {
     moveTo(p, a.spaceId, false);
     p.money -= a.amount;
-    log(`${p.name}: ${card.text} Paga ${fmt(a.amount)}`);
+    state.freePot = (state.freePot || 0) + Math.abs(a.amount);
+    applyLandingEffects(p, true);
+    state.lastLanding = { position:p.position, playerId:p.id, playerName:p.name, spaceName:BOARD[p.position].name, ts:Date.now() };
+    log(`${p.name}: ${card.text} Paga ${fmt(a.amount)} ao bote da Casa do Pobo`);
   } else if (a.type === 'moveRelative') {
     movePlayer(p, a.delta, false);
+    applyLandingEffects(p, true);
+    state.lastLanding = { position:p.position, playerId:p.id, playerName:p.name, spaceName:BOARD[p.position].name, ts:Date.now() };
     log(`${p.name}: ${card.text}`);
+  } else if (a.type === 'goToFarm') {
+    moveTo(p, 'campo-futbol', false);
+    const saved = consumeFarmEscapeCard(p);
+    if (saved) {
+      log(`${p.name} libra de traballar na granxa usando "${saved}"`);
+    } else {
+      p.skipTurns += a.turns || 2;
+      log(`${p.name} vai traballar á granxa do Eloi e perde ${a.turns || 2} quendas`);
+    }
+    state.lastLanding = { position:p.position, playerId:p.id, playerName:p.name, spaceName:BOARD[p.position].name, ts:Date.now() };
   } else if (a.type === 'skip') {
     p.skipTurns += a.turns || 1;
     log(`${p.name}: ${card.text}`);
@@ -1016,7 +1219,8 @@ async function manualBank(amount) {
   const p = state.players.find(pl => pl.id === pid);
   if (!p || !amount) return;
   p.money += amount;
-  log(`${p.name}: ${amount > 0 ? 'ingreso' : 'cobro'} manual de ${fmt(Math.abs(amount))}`);
+  if (amount < 0) state.freePot = (state.freePot || 0) + Math.abs(amount);
+  log(`${p.name}: ${amount > 0 ? 'ingreso' : 'cobro'} manual de ${fmt(Math.abs(amount))}${amount < 0 ? ' ao bote da Casa do Pobo' : ''}`);
   playSfx(amount > 0 ? 'buy' : 'pay');
   haptic(18);
   await saveState();
