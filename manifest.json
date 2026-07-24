@@ -1,20 +1,25 @@
 {
-  "name": "O Monopolis Multiplayer",
+  "name": "O Monopolis Ultra Multiplayer",
   "short_name": "O Monopolis",
+  "description": "PWA multijugador ultra de O Monopolis.",
   "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "background_color": "#f2e8c9",
-  "theme_color": "#28342B",
+  "orientation": "any",
+  "background_color": "#f0e3bf",
+  "theme_color": "#12251e",
   "icons": [
     {
       "src": "assets/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "assets/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
