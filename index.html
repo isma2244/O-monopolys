@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="gl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#28342B" />
+  <title>O Monopolis · Multiplayer</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="assets/icon-192.png" alt="" />
+        <div>
+          <h1>O Monopolis</h1>
+          <p>partida sincronizada</p>
+        </div>
+      </div>
+      <div id="connectionPill" class="pill muted">sen conectar</div>
+    </header>
+
+    <main>
+      <section id="setupView" class="view active">
+        <div class="hero-card">
+          <img class="hero-logo" src="assets/icon-512.png" alt="Piornedo" />
+          <h2>Multixogador desde cada móbil</h2>
+          <p>Crea unha partida, comparte o código/QR e cada xogador xoga desde o seu teléfono.</p>
+        </div>
+
+        <div class="card stack">
+          <h3>1 · Configuración Supabase</h3>
+          <p class="small">Pega a URL e a anon key do proxecto. Quedan gardadas neste dispositivo.</p>
+          <label>SUPABASE_URL<input id="supabaseUrl" placeholder="https://xxxx.supabase.co" /></label>
+          <label>SUPABASE_ANON_KEY<input id="supabaseKey" placeholder="eyJ..." /></label>
+          <button id="saveConfigBtn" class="secondary">Gardar configuración</button>
+          <details>
+            <summary>Ver SQL necesario</summary>
+            <pre id="sqlPreview"></pre>
+          </details>
+        </div>
+
+        <div class="grid two">
+          <div class="card stack">
+            <h3>Crear partida</h3>
+            <label>Teu nome<input id="createName" placeholder="Ismael" /></label>
+            <label>Ficha<select id="createToken"></select></label>
+            <button id="createGameBtn">Crear partida</button>
+          </div>
+
+          <div class="card stack">
+            <h3>Unirse</h3>
+            <label>Código<input id="joinCode" placeholder="PIOR-1234" /></label>
+            <label>Teu nome<input id="joinName" placeholder="Joseba" /></label>
+            <label>Ficha<select id="joinToken"></select></label>
+            <button id="joinGameBtn">Entrar</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="lobbyView" class="view">
+        <div class="card stack">
+          <div class="between">
+            <div>
+              <p class="small">Código da partida</p>
+              <h2 id="lobbyCode">----</h2>
+            </div>
+            <button id="copyLinkBtn" class="secondary">Copiar ligazón</button>
+          </div>
+          <canvas id="qrCanvas" width="180" height="180"></canvas>
+          <div id="lobbyPlayers" class="players-list"></div>
+          <div class="actions">
+            <button id="startGameBtn">Comezar partida</button>
+            <button id="leaveGameBtn" class="ghost">Saír</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="gameView" class="view">
+        <div class="game-grid">
+          <div class="board-card">
+            <div class="board-wrap" id="boardWrap">
+              <img id="boardImg" src="assets/board.jpg" alt="Tablero O Monopolis">
+              <div id="tokensLayer"></div>
+            </div>
+          </div>
+
+          <aside class="panel stack">
+            <div class="turn-card">
+              <p class="small">Turno</p>
+              <h2 id="turnLabel">—</h2>
+              <p id="diceLabel" class="dice">🎲 —</p>
+            </div>
+
+            <div id="myStatus" class="status-card"></div>
+
+            <div class="actions">
+              <button id="rollBtn">Tirar dados</button>
+              <button id="endTurnBtn" class="secondary">Rematar turno</button>
+            </div>
+
+            <div id="spacePanel" class="card stack"></div>
+
+            <details class="card">
+              <summary>Banco / axustes manuais</summary>
+              <div class="stack">
+                <label>Xogador<select id="bankPlayer"></select></label>
+                <label>Cantidade<input id="bankAmount" type="number" step="10" value="100" /></label>
+                <div class="grid two">
+                  <button id="bankAddBtn" class="secondary">Ingresar</button>
+                  <button id="bankSubBtn" class="secondary danger">Cobrar</button>
+                </div>
+              </div>
+            </details>
+
+            <details class="card">
+              <summary>Propiedades</summary>
+              <div id="propertyPanel" class="property-list"></div>
+            </details>
+
+            <details class="card">
+              <summary>Historial</summary>
+              <div id="logPanel" class="log"></div>
+            </details>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast"></div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
