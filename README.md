@@ -1,86 +1,50 @@
-# O Monopolis · V4 Host + Player
+# O Monopolis V5 - edición multixogador
 
-Esta versión añade las mejoras pedidas después de probar la app:
+Versión preparada para GitHub Pages y Supabase Realtime.
 
-## Cambios principales
+## Mejoras incluidas
 
-- Coordenadas de fichas recalculadas sobre el tablero definitivo.
-- Las fichas quedan alineadas con las casillas reales del tablero.
-- Animación de zoom de casilla al caer: muestra la casilla en grande y vuelve al tablero normal.
-- Modo **Completo**: tablero + panel de juego.
-- Modo **Jugador**: solo administración personal, sin tablero, ideal para móvil.
-- Modo **Host / TV**: solo tablero y fichas, ideal para un PC conectado a una tele.
-- Mazo visual de **Diñeiro** y **Eventos**.
-- Al comprar una propiedad aparece la carta/título de propiedad.
-- Bote de **Casa do Pobo**:
-  - las multas y pagos negativos a banca van al bote;
-  - quien cae en Casa do Pobo cobra el bote.
-- Campo de Fútbol / Granxa Eloi:
-  - si caes de forma normal, solo echas una pachanga y no pasa nada;
-  - si te manda el Rumano, vas a trabajar a la granxa y pierdes turnos;
-  - si tienes carta para librarte de la granxa, se consume y no pierdes turnos.
-- Se mantiene la V3: ranking, patrimonio, intercambios, venta de casas/hotel, bancarrota, sonidos y vibración.
+- Tablero sustituido por la última versión 700 x 700 mm entregada.
+- Coordenadas de las 40 casillas recalculadas sobre el tablero cuadrado.
+- Estaciones corregidas:
+  - inferior: O Chiringuito;
+  - izquierda: Estación de Campobecerros;
+  - superior: Estación de Buses - Verín;
+  - derecha: A Gudiña - Porta de Galicia.
+- Cuatro servicios programados:
+  - A Bodega do Quinqué;
+  - A Piscina do Riós;
+  - A Fonte;
+  - As Piscinas de Castrelo.
+- Regla aplicada a servicios: 1/2/3/4 servicios = 4x/10x/15x/20x el total de los dados.
+- Cada alquiler, compra o carta solo puede resolverse una vez por turno.
+- Los botones de compra, alquiler y mazos solo aparecen cuando corresponden al jugador actual.
+- No se puede finalizar el turno hasta resolver la casilla.
+- Intercambios por solicitud con aceptar, rechazar, cancelar y contrapropuesta.
+- Chat sincronizado dentro de la partida.
+- Fichas rediseñadas como peones tridimensionales.
+- Zoom de casilla recalculado para encuadrar el punto real del tablero.
+- Música ambiental original y efectos de sonido mejorados.
+- Interfaz rediseñada con un aspecto más sobrio y menos genérico.
+- Se mantienen los modos Completo, Móvil y Pantalla/TV.
 
-## Cómo usar modo host y modo jugador
+## Instalación en GitHub
 
-En cualquier partida puedes pulsar:
+Sube todo el contenido del ZIP a la raíz del repositorio, sustituyendo la versión anterior.
 
-- **🎮 Completo**: uso normal.
-- **📱 Xogador**: para el móvil de cada jugador.
-- **📺 Host / TV**: para el PC/tablet conectado a una tele.
-
-También puedes abrir directamente el modo TV añadiendo:
-
-```txt
-?view=host
-```
-
-Por ejemplo:
-
-```txt
-https://isma2244.github.io/O-monopolys/?join=PIOR-1234&view=host
-```
-
-## Estructura correcta en GitHub
-
-Sube todo a la raíz del repositorio:
-
-```txt
+```text
 index.html
 app.js
 data.js
 styles.css
 manifest.json
 sw.js
-README.md
 supabase-schema.sql
 assets/
-  board.jpg
-  icon-192.png
-  icon-512.png
 ```
 
-La carpeta `assets` debe estar en minúscula.
-
-## Supabase
-
-No hace falta tocar Supabase si ya funciona la creación de partidas.
+No se necesita ninguna migración adicional de Supabase: chat e intercambios se guardan dentro del JSON de la partida.
 
 ## Caché
 
-Si ves la versión antigua:
-
-1. Espera 1-2 minutos tras hacer commit.
-2. Recarga la web.
-3. En iPhone, elimina el icono de pantalla de inicio y vuelve a añadirlo.
-
-
-## V4.1 · Corrección Cartiñas / Caixa Veciñal
-
-- `Caixa Veciñal` ya no roba carta: ahora es una casilla de pago.
-- El pago de Caixa Veciñal va al bote de `Casa do Pobo`.
-- Importe aplicado por defecto: 1.500€.
-- Cartiña inferior: Eventos.
-- Cartiña derecha: Eventos.
-- Cartiña izquierda: Diñeiro.
-- Cartiña superior: Diñeiro.
+Tras subir los archivos, espera uno o dos minutos. En iPhone puede ser necesario eliminar la app de la pantalla de inicio, abrir de nuevo la URL en Safari y volver a añadirla.

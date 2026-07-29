@@ -1,13 +1,13 @@
 {
-  "name": "O Monopolis V4.1 Cartiñas Caixa",
+  "name": "O Monopolis - Partida en liña",
   "short_name": "O Monopolis",
-  "description": "PWA multijugador con Cartiñas y Caixa Veciñal corregidas.",
+  "description": "O Monopolis multixogador con modo móbil e pantalla común.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f0e3bf",
-  "theme_color": "#12251e",
+  "background_color": "#e9dab0",
+  "theme_color": "#17342a",
   "icons": [
     {
       "src": "assets/icon-192.png",
