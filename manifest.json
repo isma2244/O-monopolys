@@ -1,13 +1,13 @@
 {
-  "name": "O Monopolis - Partida en liña",
+  "name": "O Monopolis V5 Robusta",
   "short_name": "O Monopolis",
-  "description": "O Monopolis multixogador con modo móbil e pantalla común.",
+  "description": "PWA multijugador con sistema robusto de transacciones e idempotencia garantizada.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#e9dab0",
-  "theme_color": "#17342a",
+  "background_color": "#f0e3bf",
+  "theme_color": "#12251e",
   "icons": [
     {
       "src": "assets/icon-192.png",

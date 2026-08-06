@@ -1,50 +1,108 @@
-# O Monopolis V5 - edición multixogador
+# O Monopolis · V5 Robusta y Profesional
 
-Versión preparada para GitHub Pages y Supabase Realtime.
+Versión completamente refactorizada con enfoque en robustez, idempotencia y prevención de errores.
 
-## Mejoras incluidas
+## Cambios principales de V5
 
-- Tablero sustituido por la última versión 700 x 700 mm entregada.
-- Coordenadas de las 40 casillas recalculadas sobre el tablero cuadrado.
-- Estaciones corregidas:
-  - inferior: O Chiringuito;
-  - izquierda: Estación de Campobecerros;
-  - superior: Estación de Buses - Verín;
-  - derecha: A Gudiña - Porta de Galicia.
-- Cuatro servicios programados:
-  - A Bodega do Quinqué;
-  - A Piscina do Riós;
-  - A Fonte;
-  - As Piscinas de Castrelo.
-- Regla aplicada a servicios: 1/2/3/4 servicios = 4x/10x/15x/20x el total de los dados.
-- Cada alquiler, compra o carta solo puede resolverse una vez por turno.
-- Los botones de compra, alquiler y mazos solo aparecen cuando corresponden al jugador actual.
-- No se puede finalizar el turno hasta resolver la casilla.
-- Intercambios por solicitud con aceptar, rechazar, cancelar y contrapropuesta.
-- Chat sincronizado dentro de la partida.
-- Fichas rediseñadas como peones tridimensionales.
-- Zoom de casilla recalculado para encuadrar el punto real del tablero.
-- Música ambiental original y efectos de sonido mejorados.
-- Interfaz rediseñada con un aspecto más sobrio y menos genérico.
-- Se mantienen los modos Completo, Móvil y Pantalla/TV.
+### 🔒 Seguridad y Robustez
+- **Idempotencia de acciones**: Compra, alquiler, cartas y Casa do Pobo no se duplican incluso con clics múltiples
+- **Bloqueo de acciones**: Prevención de dobles clics durante el procesamiento
+- **Validación de turno**: No permite acabar turno si hay acciones pendientes
+- **Casa do Pobo atómica**: Sistema de cobro único con timestamp
 
-## Instalación en GitHub
+### 📋 Correcciones de Juego
+- **Cartiñas corregidas**: Tipos consistentes (izquierda y abajo = Diñeiro, arriba y derecha = Eventos)
+- **Caixa Veciñal**: Ahora es casilla de pago automático (no roba carta)
+- **Turnos con saltos**: Mejor gestión de turnos saltados
+- **Botones inteligentes**: Desactivados cuando no hay acción posible
 
-Sube todo el contenido del ZIP a la raíz del repositorio, sustituyendo la versión anterior.
+### 🎮 Mejoras de Interfaz
+- Botones validados según dinero, grupo completo, turnos disponibles
+- Toast informativos cuando falta acción
+- Sincronización mejorada con resolución de conflictos
+- Estado más explícito durante acciones
 
-```text
+## Herencia de V4
+
+Se mantiene completamente la funcionalidad de V4:
+
+- Coordenadas de fichas recalculadas sobre el tablero definitivo.
+- Fichas alineadas con las casillas reales del tablero.
+- Animación de zoom de casilla al caer.
+- Modo **Completo**: tablero + panel de juego.
+- Modo **Jugador**: solo administración personal, sin tablero.
+- Modo **Host / TV**: solo tablero y fichas para pantalla.
+- Mazo visual de **Diñeiro** y **Eventos**.
+- Títulos de propiedad al comprar.
+- Bote de **Casa do Pobo** con multas acumuladas.
+- Campo de Fútbol / Granxa Eloi con reglas diferenciadas.
+- Ranking, patrimonio, intercambios, construcciones, bancarrota, sonidos y vibración.
+
+## Cómo usar modo host y modo jugador
+
+En cualquier partida puedes pulsar:
+
+- **🎮 Completo**: uso normal.
+- **📱 Xogador**: para el móvil de cada jugador.
+- **📺 Host / TV**: para el PC/tablet conectado a una tele.
+
+También puedes abrir directamente el modo TV añadiendo:
+
+```txt
+?view=host
+```
+
+Por ejemplo:
+
+```txt
+https://isma2244.github.io/O-monopolys/?join=PIOR-1234&view=host
+```
+
+## Estructura correcta en GitHub
+
+Sube todo a la raíz del repositorio:
+
+```txt
 index.html
 app.js
 data.js
 styles.css
 manifest.json
 sw.js
+README.md
 supabase-schema.sql
 assets/
+  board.jpg
+  icon-192.png
+  icon-512.png
 ```
 
-No se necesita ninguna migración adicional de Supabase: chat e intercambios se guardan dentro del JSON de la partida.
+La carpeta `assets` debe estar en minúscula.
+
+## Supabase
+
+No hace falta tocar Supabase si ya funciona la creación de partidas.
 
 ## Caché
 
-Tras subir los archivos, espera uno o dos minutos. En iPhone puede ser necesario eliminar la app de la pantalla de inicio, abrir de nuevo la URL en Safari y volver a añadirla.
+Si ves la versión antigua:
+
+1. Espera 1-2 minutos tras hacer commit.
+2. Recarga la web.
+3. En iPhone, elimina el icono de pantalla de inicio y vuelve a añadirlo.
+
+
+## Diferencias con versiones anteriores
+
+### V5.0 vs V4.1
+- Idempotencia garantizada en todas las acciones críticas
+- Botones inteligentes desactivados según validaciones
+- Mejor manejo de sincronización
+- Corrección de tipos de Cartiña (money vs caixa)
+- System de bloqueo de acciones para prevenir race conditions
+
+### Compatibilidad
+- ✅ Compatible con Supabase existente (sin cambios de esquema)
+- ✅ PWA funciona sin necesidad de reinstalar
+- ✅ Progreso de partida anterior se carga correctamente
+- ✅ Todos los datos y rankings se mantienen

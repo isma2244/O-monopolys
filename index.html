@@ -3,232 +3,272 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#17342a" />
+  <meta name="theme-color" content="#12251e" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="O Monopolis" />
-  <title>O Monopolis · Partida en liña</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <title>O Monopolis · Ultra Multiplayer</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
-  <audio id="ambientAudio" src="assets/ambient-piornedo.wav" loop preload="auto"></audio>
 
-  <header class="app-header">
-    <div class="brand-lockup">
-      <img src="assets/icon-192.png" alt="" class="brand-mark" />
-      <div>
-        <strong>O Monopolis</strong>
-        <span>Partida en liña</span>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button id="musicBtn" class="header-button" type="button" title="Música de ambiente">♫</button>
-      <button id="soundBtn" class="header-button" type="button" title="Efectos de son">◖))</button>
-      <span id="connectionPill" class="connection-pill">Sen conectar</span>
-    </div>
-  </header>
-
-  <main id="app" class="app-shell">
-    <section id="setupView" class="view active">
-      <div class="intro-panel">
-        <div class="intro-copy">
-          <p class="eyebrow">Piornedo · Edición multixogador</p>
-          <h1>A partida de sempre,<br />cada un desde o seu móbil.</h1>
-          <p>Crea unha sala, comparte o código e usa unha pantalla común para o taboleiro ou xoga todo desde o mesmo dispositivo.</p>
+  <div id="app">
+    <header class="topbar">
+      <button id="soundBtn" class="icon-btn" title="Son">🔊</button>
+      <div class="brand">
+        <img src="assets/icon-192.png" alt="" />
+        <div>
+          <h1>O Monopolis</h1>
+          <p>ultra multiplayer</p>
         </div>
-        <img src="assets/icon-512.png" alt="Escudo de Piornedo" class="intro-crest" />
       </div>
+      <div id="connectionPill" class="pill muted">sen conectar</div>
+    </header>
 
-      <div class="setup-grid">
-        <section class="surface game-entry">
-          <div class="segmented" role="tablist">
-            <button id="tabCreate" class="segment active" type="button">Crear partida</button>
-            <button id="tabJoin" class="segment" type="button">Entrar cun código</button>
+    <main>
+      <section id="setupView" class="view active">
+        <div class="hero-card">
+          <div class="hero-glow"></div>
+          <img class="hero-logo" src="assets/icon-512.png" alt="Piornedo" />
+          <h2>O Monopolis Ultra</h2>
+          <p>Crea partida, comparte código e xogade cada un desde o seu móbil en tempo real.</p>
+          <div class="hero-badges">
+            <span>🎲 2 dados 3D</span>
+            <span>📱 PWA</span>
+            <span>⚡ realtime</span>
+            <span>🤝 intercambios</span>
+            <span>🏆 ranking</span>
+            <span>🏠 casas/hotel</span>
           </div>
+        </div>
 
-          <div id="createBox" class="form-stack">
-            <label>Nome<input id="createName" placeholder="O teu nome" maxlength="24" /></label>
-            <label>Ficha<select id="createToken"></select></label>
-            <button id="createGameBtn" class="primary-button" type="button">Crear sala</button>
-          </div>
-
-          <div id="joinBox" class="form-stack hidden">
-            <label>Código<input id="joinCode" placeholder="PIOR-1234" autocapitalize="characters" maxlength="9" /></label>
-            <label>Nome<input id="joinName" placeholder="O teu nome" maxlength="24" /></label>
-            <label>Ficha<select id="joinToken"></select></label>
-            <button id="joinGameBtn" class="primary-button" type="button">Entrar na sala</button>
-          </div>
-        </section>
-
-        <details class="surface config-panel">
-          <summary>Configuración de Supabase</summary>
-          <div class="form-stack config-body">
-            <p class="helper">A configuración queda gardada neste dispositivo. Usa a URL base do proxecto, sen <code>/rest/v1/</code>.</p>
-            <label>Project URL<input id="supabaseUrl" placeholder="https://xxxx.supabase.co" autocomplete="off" /></label>
-            <label>Anon public key<input id="supabaseKey" placeholder="eyJ..." autocomplete="off" /></label>
-            <button id="saveConfigBtn" class="secondary-button" type="button">Gardar conexión</button>
-            <details class="sql-details"><summary>Ver SQL necesario</summary><pre id="sqlPreview"></pre></details>
-          </div>
-        </details>
-      </div>
-    </section>
-
-    <section id="lobbyView" class="view">
-      <div class="lobby-layout">
-        <section class="surface lobby-code-card">
-          <p class="eyebrow">Código da partida</p>
-          <div id="lobbyCode" class="room-code">PIOR-0000</div>
-          <p class="helper">Comparte o código cos xogadores. O host inicia cando esteades todos.</p>
-          <div class="button-row">
-            <button id="copyLinkBtn" class="secondary-button" type="button">Copiar ligazón</button>
-            <button id="nativeShareBtn" class="secondary-button" type="button">Compartir</button>
-          </div>
-          <div id="qrCanvas" class="code-pattern" aria-hidden="true"></div>
-        </section>
-
-        <section class="surface lobby-players-card">
-          <div class="section-heading">
-            <div><p class="eyebrow">Sala</p><h2>Xogadores</h2></div>
-            <span id="lobbyCount" class="count-badge">0</span>
-          </div>
-          <div id="lobbyPlayers" class="player-list"></div>
-          <div class="button-row lobby-actions">
-            <button id="startGameBtn" class="primary-button" type="button">Comezar</button>
-            <button id="leaveGameBtn" class="text-button" type="button">Saír</button>
-          </div>
-        </section>
-      </div>
-    </section>
-
-    <section id="gameView" class="view">
-      <nav class="display-switch surface" aria-label="Modo de visualización">
-        <button id="modeFullBtn" type="button">Completo</button>
-        <button id="modePlayerBtn" type="button">Móbil</button>
-        <button id="modeHostBtn" type="button">Pantalla / TV</button>
-      </nav>
-
-      <div class="game-layout">
-        <section class="board-panel surface">
-          <div class="board-heading">
-            <div><p class="eyebrow">Taboleiro común</p><strong id="boardSubtitle">Partida en curso</strong></div>
-            <div class="compact-actions">
-              <button id="fitBoardBtn" type="button">A miña ficha</button>
-              <button id="zoomBoardBtn" type="button">Ampliar</button>
-            </div>
-          </div>
-          <div id="boardScroll" class="board-scroll">
-            <div id="boardWrap" class="board-wrap">
-              <picture>
-                <source srcset="assets/board.webp" type="image/webp" />
-                <img id="boardImg" src="assets/board.jpg" alt="Taboleiro O Monopolis" />
-              </picture>
-              <div id="buildingsLayer" class="board-layer"></div>
-              <div id="tokensLayer" class="board-layer"></div>
-            </div>
-          </div>
-          <div id="hostTicker" class="host-ticker hidden"></div>
-        </section>
-
-        <aside class="control-panel">
-          <section class="turn-panel surface">
-            <div class="turn-copy"><p class="eyebrow">Turno</p><h2 id="turnLabel">—</h2><p id="diceLabel" class="dice-result">Sen tirar</p></div>
-            <div id="diceStage" class="dice-pair" aria-hidden="true">
-              <div class="dice-cube" id="diceCube1"><i class="face front">1</i><i class="face back">6</i><i class="face right">3</i><i class="face left">4</i><i class="face top">2</i><i class="face bottom">5</i></div>
-              <div class="dice-cube second" id="diceCube2"><i class="face front">1</i><i class="face back">6</i><i class="face right">3</i><i class="face left">4</i><i class="face top">2</i><i class="face bottom">5</i></div>
-            </div>
-          </section>
-
-          <section id="myStatus" class="surface status-panel"></section>
-
-          <div id="mainActions" class="main-actions">
-            <button id="rollBtn" class="primary-button" type="button">Tirar os dados</button>
-            <button id="endTurnBtn" class="secondary-button" type="button">Rematar quenda</button>
-          </div>
-
-          <section id="spacePanel" class="surface landing-panel"></section>
-
-          <section class="surface deck-section">
-            <div class="section-heading compact"><div><p class="eyebrow">Mazos</p><h3>Cartiñas</h3></div></div>
-            <div class="deck-grid">
-              <button id="moneyDeckBtn" class="deck-card money" type="button"><span class="deck-symbol">€</span><span><strong>Diñeiro</strong><small id="moneyDeckCount">—</small></span></button>
-              <button id="eventDeckBtn" class="deck-card event" type="button"><span class="deck-symbol">?</span><span><strong>Eventos</strong><small id="eventDeckCount">—</small></span></button>
-            </div>
-          </section>
-
-          <details class="surface collapsible" open>
-            <summary>Patrimonio e propiedades</summary>
-            <div id="scoreboardPanel" class="scoreboard"></div>
-            <div id="propertyPanel" class="property-list"></div>
-            <div class="asset-tools">
-              <label>Xestionar<select id="manageAssetSelect"></select></label>
-              <div class="button-row">
-                <button id="sellHouseBtn" class="secondary-button" type="button">Vender construción</button>
-                <button id="mortgageAssetBtn" class="secondary-button" type="button">Hipotecar / liberar</button>
+        <div class="grid two">
+          <div class="card stack">
+            <div class="section-title">
+              <span class="num">1</span>
+              <div>
+                <h3>Conexión Supabase</h3>
+                <p>Pega Project URL e anon public key. Queda gardado no dispositivo.</p>
               </div>
             </div>
-          </details>
+            <label>SUPABASE_URL<input id="supabaseUrl" placeholder="https://xxxx.supabase.co" autocomplete="off" /></label>
+            <label>SUPABASE_ANON_KEY<input id="supabaseKey" placeholder="eyJ..." autocomplete="off" /></label>
+            <button id="saveConfigBtn" class="secondary">Gardar conexión</button>
+            <details>
+              <summary>SQL necesario</summary>
+              <pre id="sqlPreview"></pre>
+            </details>
+          </div>
 
-          <details class="surface collapsible" open>
-            <summary>Intercambios <span id="tradeBadge" class="inline-badge hidden">0</span></summary>
-            <div id="tradeInbox" class="trade-inbox"></div>
-            <div class="trade-composer">
-              <input id="counterTradeId" type="hidden" />
-              <label>Negociar con<select id="tradeToPlayer"></select></label>
-              <div class="trade-columns">
-                <div><p class="trade-title">Ti entregas</p><div id="tradeGiveProps" class="check-list"></div><label>Diñeiro<input id="tradeGiveMoney" type="number" min="0" step="10" value="0" /></label></div>
-                <div><p class="trade-title">Ti solicitas</p><div id="tradeAskProps" class="check-list"></div><label>Diñeiro<input id="tradeAskMoney" type="number" min="0" step="10" value="0" /></label></div>
+          <div class="card stack">
+            <div class="section-title">
+              <span class="num">2</span>
+              <div>
+                <h3>Partida</h3>
+                <p>Fai de host ou entra nunha partida existente.</p>
               </div>
-              <div class="button-row"><button id="sendTradeBtn" class="primary-button" type="button">Enviar proposta</button><button id="cancelCounterBtn" class="text-button hidden" type="button">Cancelar contraproposta</button></div>
             </div>
-          </details>
 
-          <details class="surface collapsible chat-section" open>
-            <summary>Chat da partida <span id="chatBadge" class="inline-badge hidden">0</span></summary>
-            <div id="chatMessages" class="chat-messages"></div>
-            <div class="chat-compose"><input id="chatInput" placeholder="Escribe unha mensaxe…" maxlength="220" /><button id="sendChatBtn" type="button">Enviar</button></div>
-          </details>
-
-          <details id="bankDetails" class="surface collapsible">
-            <summary>Banco e corrección manual</summary>
-            <div class="form-stack compact-form">
-              <label>Xogador<select id="bankPlayer"></select></label>
-              <label>Cantidade<input id="bankAmount" type="number" step="10" value="100" /></label>
-              <div class="button-row"><button id="bankAddBtn" class="secondary-button" type="button">Ingresar</button><button id="bankSubBtn" class="danger-button" type="button">Cobrar</button></div>
-              <button id="bankruptBtn" class="text-button danger-text" type="button">Declararme en bancarrota</button>
+            <div class="mode-tabs">
+              <button id="tabCreate" class="tab active" type="button">Crear</button>
+              <button id="tabJoin" class="tab" type="button">Unirse</button>
             </div>
-          </details>
 
-          <details class="surface collapsible">
-            <summary>Historial</summary>
-            <div id="logPanel" class="game-log"></div>
-          </details>
-        </aside>
-      </div>
-    </section>
-  </main>
+            <div id="createBox" class="stack">
+              <label>Teu nome<input id="createName" placeholder="Ismael" /></label>
+              <label>Ficha<select id="createToken"></select></label>
+              <button id="createGameBtn">Crear partida nova</button>
+            </div>
 
-  <div id="cardModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-sheet">
-      <button id="closeModalBtn" class="modal-close" type="button" aria-label="Pechar">×</button>
-      <div id="modalVisual" class="modal-emblem">?</div>
-      <p id="modalKind" class="eyebrow">Cartiña</p>
-      <h2 id="modalTitle">Título</h2>
-      <div id="modalText" class="modal-content"></div>
+            <div id="joinBox" class="stack hidden">
+              <label>Código<input id="joinCode" placeholder="PIOR-1234" /></label>
+              <label>Teu nome<input id="joinName" placeholder="Joseba" /></label>
+              <label>Ficha<select id="joinToken"></select></label>
+              <button id="joinGameBtn">Entrar na partida</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="lobbyView" class="view">
+        <div class="lobby-grid">
+          <div class="card lobby-card stack">
+            <p class="small">Código da partida</p>
+            <div class="code-display" id="lobbyCode">PIOR-0000</div>
+            <p class="muted">Comparte este código ou a ligazón. Cando esteades todos, o host empeza a partida.</p>
+            <div class="actions">
+              <button id="copyLinkBtn" class="secondary">Copiar ligazón</button>
+              <button id="nativeShareBtn" class="secondary">Compartir</button>
+            </div>
+            <div class="qr-like" id="qrCanvas"></div>
+          </div>
+
+          <div class="card stack">
+            <div class="section-title">
+              <span class="num">👥</span>
+              <div>
+                <h3>Xogadores</h3>
+                <p>Fichas bloqueadas por orde de entrada.</p>
+              </div>
+            </div>
+            <div id="lobbyPlayers" class="players-list"></div>
+            <div class="actions">
+              <button id="startGameBtn">Comezar partida</button>
+              <button id="leaveGameBtn" class="ghost">Saír</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="gameView" class="view">
+        <div class="view-mode-bar card">
+          <button id="modeFullBtn" class="secondary">🎮 Completo</button>
+          <button id="modePlayerBtn" class="secondary">📱 Xogador</button>
+          <button id="modeHostBtn" class="secondary">📺 Host / TV</button>
+        </div>
+        <div class="game-grid">
+          <div class="board-card">
+            <div class="board-toolbar">
+              <div>
+                <p class="small">Taboleiro</p>
+                <strong id="boardSubtitle">Partida en curso</strong>
+              </div>
+              <div class="actions mini">
+                <button id="fitBoardBtn" class="secondary">Axustar</button>
+                <button id="zoomBoardBtn" class="secondary">Zoom</button>
+              </div>
+            </div>
+            <div class="board-scroll" id="boardScroll">
+              <div class="board-wrap" id="boardWrap">
+                <img id="boardImg" src="assets/board.jpg" alt="Tablero O Monopolis">
+                <div id="tokensLayer"></div>
+                <div id="buildingsLayer"></div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="panel">
+            <div class="turn-card">
+              <div>
+                <p class="small">Turno actual</p>
+                <h2 id="turnLabel">—</h2>
+              </div>
+              <div class="dice-stage dice-pair" id="diceStage">
+                <div class="dice-cube" id="diceCube1" aria-label="Dado 1">
+                  <div class="face front">1</div>
+                  <div class="face back">6</div>
+                  <div class="face right">3</div>
+                  <div class="face left">4</div>
+                  <div class="face top">2</div>
+                  <div class="face bottom">5</div>
+                </div>
+                <div class="dice-cube dice-cube-small" id="diceCube2" aria-label="Dado 2">
+                  <div class="face front">1</div>
+                  <div class="face back">6</div>
+                  <div class="face right">3</div>
+                  <div class="face left">4</div>
+                  <div class="face top">2</div>
+                  <div class="face bottom">5</div>
+                </div>
+              </div>
+              <p id="diceLabel" class="dice-label">🎲 —</p>
+            </div>
+
+            <div id="myStatus" class="status-card"></div>
+
+            <div class="card stack">
+              <summary class="fake-summary">🏆 Ranking</summary>
+              <div id="scoreboardPanel" class="scoreboard"></div>
+            </div>
+
+            <div class="actions main-actions">
+              <button id="rollBtn">Tirar dados</button>
+              <button id="endTurnBtn" class="secondary">Rematar</button>
+            </div>
+
+            <div class="deck-zone">
+              <button id="moneyDeckBtn" class="deck-pile money-deck" type="button">
+                <span class="deck-icon">€</span>
+                <span><strong>Diñeiro</strong><small id="moneyDeckCount">— cartas</small></span>
+              </button>
+              <button id="eventDeckBtn" class="deck-pile event-deck" type="button">
+                <span class="deck-icon">?</span>
+                <span><strong>Eventos</strong><small id="eventDeckCount">— cartas</small></span>
+              </button>
+            </div>
+
+            <div id="spacePanel" class="card stack"></div>
+
+            <details class="card">
+              <summary>Acciones PRO</summary>
+              <div class="stack mt">
+                <div class="grid two compact">
+                  <button id="sellHouseBtn" class="secondary">Vender casa/hotel</button>
+                  <button id="bankruptBtn" class="secondary danger">Bancarrota</button>
+                </div>
+                <div class="trade-box stack">
+                  <p class="small">Intercambio rápido</p>
+                  <label>Dar a<select id="tradeToPlayer"></select></label>
+                  <label>Propiedade<select id="tradeProperty"></select></label>
+                  <label>Diñeiro extra que das<input id="tradeMoney" type="number" step="10" value="0" /></label>
+                  <button id="tradeBtn" class="secondary">Enviar intercambio</button>
+                </div>
+              </div>
+            </details>
+
+            <details class="card" open>
+              <summary>Propiedades e posesións</summary>
+              <div id="propertyPanel" class="property-list"></div>
+            </details>
+
+            <details class="card">
+              <summary>Banco / corrección manual</summary>
+              <div class="stack mt">
+                <label>Xogador<select id="bankPlayer"></select></label>
+                <label>Cantidade<input id="bankAmount" type="number" step="10" value="100" /></label>
+                <div class="grid two compact">
+                  <button id="bankAddBtn" class="secondary">Ingresar</button>
+                  <button id="bankSubBtn" class="secondary danger">Cobrar</button>
+                </div>
+              </div>
+            </details>
+
+            <details class="card">
+              <summary>Historial da partida</summary>
+              <div id="logPanel" class="log"></div>
+            </details>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="cardModal" class="modal hidden">
+    <div class="modal-card">
+      <button id="closeModalBtn" class="modal-close">×</button>
+      <div id="modalVisual" class="modal-visual">?</div>
+      <p id="modalKind" class="small">CARTA</p>
+      <h3 id="modalTitle">Carta</h3>
+      <p id="modalText"></p>
     </div>
   </div>
 
-  <div id="landingZoom" class="landing-overlay hidden" aria-hidden="true">
-    <div class="landing-sheet">
-      <div id="landingViewport" class="landing-viewport"><img id="landingBoardImg" src="assets/board.webp" alt="" /><span id="landingMarker" class="landing-marker"></span></div>
-      <div class="landing-caption"><p id="landingPlayer" class="eyebrow">Xogador</p><h2 id="landingTitle">Casilla</h2><p id="landingSubtitle">—</p></div>
+  <div id="landingZoom" class="landing-zoom hidden">
+    <div class="landing-card">
+      <div id="landingViewport" class="landing-viewport"></div>
+      <div class="landing-info">
+        <p class="small">Cae en</p>
+        <h2 id="landingTitle">Casilla</h2>
+        <p id="landingSubtitle">—</p>
+      </div>
     </div>
   </div>
 
-  <div id="toast" class="toast" role="status"></div>
+  <div id="toast"></div>
+
   <script type="module" src="app.js"></script>
 </body>
 </html>

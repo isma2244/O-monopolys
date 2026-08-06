@@ -6,14 +6,14 @@ export const START_MONEY = 15000;
 export const PASS_GO_AMOUNT = 2000;
 
 export const TOKENS = [
-  { id:"cabuxa", label:"Cabuxa", icon:"🐐", color:"#d7a84d" },
-  { id:"tractor", label:"Tractor", icon:"🚜", color:"#d65b3d" },
-  { id:"viño", label:"Viño", icon:"🍷", color:"#7f365b" },
-  { id:"casa", label:"Casa", icon:"🏠", color:"#31806d" },
-  { id:"castaña", label:"Castaña", icon:"🌰", color:"#825136" },
-  { id:"bus", label:"Bus", icon:"🚌", color:"#3b6da8" },
-  { id:"balon", label:"Balón", icon:"⚽", color:"#343c38" },
-  { id:"forno", label:"Forno", icon:"🔥", color:"#c84f2f" }
+  { id: "cabuxa", label: "🐐 Cabuxa" },
+  { id: "tractor", label: "🚜 Tractor" },
+  { id: "viño", label: "🍷 Viño" },
+  { id: "casa", label: "🏠 Casa" },
+  { id: "castaña", label: "🌰 Castaña" },
+  { id: "bus", label: "🚌 Bus" },
+  { id: "balon", label: "⚽ Balón" },
+  { id: "forno", label: "🔥 Forno" }
 ];
 
 export const PROPERTY_DATA = {
@@ -42,61 +42,57 @@ export const PROPERTY_DATA = {
 };
 
 export const STATION_DATA = {
-  "o-chiringuito": { name:"O Chiringuito", price:2000, mortgage:1000, rents:[250,500,1000,2000] },
-  "estacion-campobecerros": { name:"Estación de Campobecerros", price:2000, mortgage:1000, rents:[250,500,1000,2000] },
+  "a-gudina-porta-de-galicia": { name:"A Gudiña - Porta de Galicia", price:2000, mortgage:1000, rents:[250,500,1000,2000] },
   "estacion-buses-verin": { name:"Estación de Buses - Verín", price:2000, mortgage:1000, rents:[250,500,1000,2000] },
-  "a-gudina-porta-de-galicia": { name:"A Gudiña - Porta de Galicia", price:2000, mortgage:1000, rents:[250,500,1000,2000] }
-};
-
-export const SERVICE_DATA = {
-  "bodega-do-quinque": { name:"A Bodega do Quinqué", price:1500, mortgage:750, multipliers:[4,10,15,20] },
-  "piscina-do-rios": { name:"A Piscina do Riós", price:1500, mortgage:750, multipliers:[4,10,15,20] },
-  "a-fonte-servizo": { name:"A Fonte", price:1500, mortgage:750, multipliers:[4,10,15,20] },
-  "piscinas-de-castrelo": { name:"As Piscinas de Castrelo", price:1500, mortgage:750, multipliers:[4,10,15,20] }
+  "estacion-campobecerros": { name:"Estación de Campobecerros", price:2000, mortgage:1000, rents:[250,500,1000,2000] },
+  "o-chiringuito": { name:"O Chiringuito", price:2000, mortgage:1000, rents:[250,500,1000,2000] }
 };
 
 // Orden del tablero: empieza en Piornedo, esquina inferior derecha, y avanza en sentido horario.
 export const BOARD = [
-  { id:"go", name:"Piornedo", type:"go", x:91.63, y:91.63 },
-  { id:"rua-o-pozo", name:"Rúa O Pozo", type:"property", propertyId:"rua-o-pozo", x:80.65, y:91.63 },
-  { id:"caixa-1", name:"Caixa Veciñal", type:"fee", fee:1500, x:73.04, y:91.63 },
-  { id:"rua-calvario", name:"Rúa Calvario", type:"property", propertyId:"rua-calvario", x:65.43, y:91.63 },
-  { id:"bodega-do-quinque", name:"A Bodega do Quinqué", type:"service", serviceId:"bodega-do-quinque", x:57.81, y:91.63 },
-  { id:"o-chiringuito", name:"O Chiringuito", type:"station", stationId:"o-chiringuito", x:50.18, y:91.63 },
-  { id:"rua-nogueira", name:"Rúa Nogueira", type:"property", propertyId:"rua-nogueira", x:42.57, y:91.63 },
-  { id:"cartina-1", name:"Cartiña de Eventos", type:"event", x:34.94, y:91.63 },
-  { id:"rua-da-canella", name:"Rúa Da Canella", type:"property", propertyId:"rua-da-canella", x:27.31, y:91.63 },
-  { id:"rua-o-rial", name:"Rúa O Rial", type:"property", propertyId:"rua-o-rial", x:19.71, y:91.63 },
-  { id:"campo-futbol", name:"Campo de Fútbol / Granxa Eloi", type:"corner", x:8.57, y:91.63 },
-  { id:"rua-calleteiro", name:"Rúa Calleteiro", type:"property", propertyId:"rua-calleteiro", x:8.57, y:80.65 },
-  { id:"cartina-2", name:"Cartiña de Diñeiro", type:"caixa", x:8.57, y:73.04 },
-  { id:"rua-cachon", name:"Rúa Cachón", type:"property", propertyId:"rua-cachon", x:8.57, y:65.43 },
-  { id:"rua-fendonces", name:"Rúa Fendonces", type:"property", propertyId:"rua-fendonces", x:8.57, y:57.81 },
-  { id:"estacion-campobecerros", name:"Estación de Campobecerros", type:"station", stationId:"estacion-campobecerros", x:8.57, y:50.18 },
-  { id:"karting-chaves", name:"Karting Chaves", type:"property", propertyId:"karting-chaves", x:8.57, y:42.57 },
-  { id:"piscina-do-rios", name:"A Piscina do Riós", type:"service", serviceId:"piscina-do-rios", x:8.57, y:34.94 },
-  { id:"merendoiro", name:"Merendoiro", type:"property", propertyId:"merendoiro", x:8.57, y:27.31 },
-  { id:"embalse-de-campos", name:"Embalse de Campos", type:"property", propertyId:"embalse-de-campos", x:8.57, y:19.71 },
-  { id:"parking", name:"Casa do Pobo", type:"parking", x:8.57, y:8.57 },
-  { id:"resort-da-tia-otilia", name:"Resort Da Tía Otilia", type:"property", propertyId:"resort-da-tia-otilia", x:19.71, y:8.57 },
-  { id:"cartina-3", name:"Cartiña de Diñeiro", type:"caixa", x:27.31, y:8.57 },
-  { id:"portozon", name:"Portozón", type:"property", propertyId:"portozon", x:34.94, y:8.57 },
-  { id:"rio-do-molino", name:"Río Do Molino", type:"property", propertyId:"rio-do-molino", x:42.57, y:8.57 },
-  { id:"estacion-buses-verin", name:"Estación de Buses - Verín", type:"station", stationId:"estacion-buses-verin", x:50.18, y:8.57 },
-  { id:"foxo-do-lobo", name:"Foxo Do Lobo", type:"property", propertyId:"foxo-do-lobo", x:57.81, y:8.57 },
-  { id:"forno", name:"Forno", type:"property", propertyId:"forno", x:65.43, y:8.57 },
-  { id:"a-fonte-servizo", name:"A Fonte", type:"service", serviceId:"a-fonte-servizo", x:73.04, y:8.57 },
-  { id:"igrexa", name:"Igrexa", type:"property", propertyId:"igrexa", x:80.65, y:8.57 },
-  { id:"a-fonte", name:"A Fonte", type:"corner", x:91.63, y:8.57 },
-  { id:"pedralonga", name:"Pedralonga", type:"property", propertyId:"pedralonga", x:91.63, y:19.71 },
-  { id:"cachon-da-cenza", name:"Cachón Da Cenza", type:"property", propertyId:"cachon-da-cenza", x:91.63, y:27.31 },
-  { id:"caixa-2", name:"Caixa Veciñal", type:"fee", fee:1500, x:91.63, y:34.94 },
-  { id:"reitoral-da-chaira", name:"Reitoral Da Chaira", type:"property", propertyId:"reitoral-da-chaira", x:91.63, y:42.57 },
-  { id:"a-gudina-porta-de-galicia", name:"A Gudiña - Porta de Galicia", type:"station", stationId:"a-gudina-porta-de-galicia", x:91.63, y:50.18 },
-  { id:"cartina-4", name:"Cartiña de Eventos", type:"event", x:91.63, y:57.81 },
-  { id:"tanatorio", name:"Tanatorio", type:"property", propertyId:"tanatorio", x:91.63, y:65.43 },
-  { id:"piscinas-de-castrelo", name:"As Piscinas de Castrelo", type:"service", serviceId:"piscinas-de-castrelo", x:91.63, y:73.04 },
-  { id:"praza", name:"Praza", type:"property", propertyId:"praza", x:91.63, y:80.65 }
+  { id:"go", name:"Piornedo", type:"go", x:74.23, y:90.79 },
+  { id:"rua-o-pozo", name:"Rúa O Pozo", type:"property", propertyId:"rua-o-pozo", x:67.73, y:90.79 },
+  { id:"caixa-1", name:"Caixa Veciñal", type:"fee", fee:1500, x:63.27, y:90.79 },
+  { id:"rua-calvario", name:"Rúa Calvario", type:"property", propertyId:"rua-calvario", x:58.83, y:90.79 },
+  { id:"servizos-1", name:"Servizos", type:"service", x:54.4, y:90.79 },
+  { id:"o-chiringuito", name:"O Chiringuito", type:"station", stationId:"o-chiringuito", x:49.96, y:90.79 },
+  { id:"rua-nogueira", name:"Rúa Nogueira", type:"property", propertyId:"rua-nogueira", x:45.52, y:90.79 },
+  { id:"cartina-1", name:"Cartiña", type:"event", x:41.08, y:90.79 },
+  { id:"rua-da-canella", name:"Rúa Da Canella", type:"property", propertyId:"rua-da-canella", x:36.65, y:90.79 },
+  { id:"rua-o-rial", name:"Rúa O Rial", type:"property", propertyId:"rua-o-rial", x:32.19, y:90.79 },
+  { id:"campo-futbol", name:"Campo de Fútbol / Granxa Eloi", type:"corner", x:25.71, y:90.79 },
+
+  { id:"rua-calleteiro", name:"Rúa Calleteiro", type:"property", propertyId:"rua-calleteiro", x:25.71, y:79.96 },
+  { id:"cartina-2", name:"Cartiña", type:"money", x:25.71, y:72.54 },
+  { id:"rua-cachon", name:"Rúa Cachón", type:"property", propertyId:"rua-cachon", x:25.71, y:64.82 },
+  { id:"rua-fendonces", name:"Rúa Fendonces", type:"property", propertyId:"rua-fendonces", x:25.71, y:57.25 },
+  { id:"a-gudina-porta-de-galicia", name:"A Gudiña - Porta de Galicia", type:"station", stationId:"a-gudina-porta-de-galicia", x:25.71, y:49.68 },
+  { id:"karting-chaves", name:"Karting Chaves", type:"property", propertyId:"karting-chaves", x:25.71, y:42.14 },
+  { id:"servizos-2", name:"Servizos", type:"service", x:25.71, y:34.57 },
+  { id:"merendoiro", name:"Merendoiro", type:"property", propertyId:"merendoiro", x:25.71, y:27.04 },
+  { id:"embalse-de-campos", name:"Embalse de Campos", type:"property", propertyId:"embalse-de-campos", x:25.71, y:19.43 },
+  { id:"parking", name:"Casa do Pobo", type:"parking", x:25.71, y:8.68 },
+
+  { id:"resort-da-tia-otilia", name:"Resort Da Tía Otilia", type:"property", propertyId:"resort-da-tia-otilia", x:32.19, y:8.68 },
+  { id:"cartina-3", name:"Cartiña", type:"money", x:36.65, y:8.68 },
+  { id:"portozon", name:"Portozón", type:"property", propertyId:"portozon", x:41.08, y:8.68 },
+  { id:"rio-do-molino", name:"Río Do Molino", type:"property", propertyId:"rio-do-molino", x:45.52, y:8.68 },
+  { id:"estacion-buses-verin", name:"Estación de Buses - Verín", type:"station", stationId:"estacion-buses-verin", x:49.96, y:8.68 },
+  { id:"foxo-do-lobo", name:"Foxo Do Lobo", type:"property", propertyId:"foxo-do-lobo", x:54.4, y:8.68 },
+  { id:"forno", name:"Forno", type:"property", propertyId:"forno", x:58.83, y:8.68 },
+  { id:"servizos-3", name:"Servizos", type:"service", x:63.27, y:8.68 },
+  { id:"igrexa", name:"Igrexa", type:"property", propertyId:"igrexa", x:67.73, y:8.68 },
+  { id:"a-fonte", name:"A Fonte", type:"corner", x:74.23, y:8.68 },
+
+  { id:"pedralonga", name:"Pedralonga", type:"property", propertyId:"pedralonga", x:74.23, y:19.43 },
+  { id:"cachon-da-cenza", name:"Cachón Da Cenza", type:"property", propertyId:"cachon-da-cenza", x:74.23, y:27.04 },
+  { id:"caixa-2", name:"Caixa Veciñal", type:"fee", fee:1500, x:74.23, y:34.57 },
+  { id:"reitoral-da-chaira", name:"Reitoral Da Chaira", type:"property", propertyId:"reitoral-da-chaira", x:74.23, y:42.14 },
+  { id:"estacion-campobecerros", name:"Estación de Campobecerros", type:"station", stationId:"estacion-campobecerros", x:74.23, y:49.68 },
+  { id:"cartina-4", name:"Cartiña", type:"event", x:74.23, y:57.25 },
+  { id:"tanatorio", name:"Tanatorio", type:"property", propertyId:"tanatorio", x:74.23, y:64.82 },
+  { id:"servizos-4", name:"Servizos", type:"service", x:74.23, y:72.54 },
+  { id:"praza", name:"Praza", type:"property", propertyId:"praza", x:74.23, y:79.96 }
 ];
 
 export const EVENT_CARDS = [
