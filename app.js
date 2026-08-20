@@ -43,48 +43,15 @@ const $ = (id) => document.getElementById(id);
 const fmt = (n) => `${Math.round(n).toLocaleString('de-DE')}€`;
 const now = () => new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
 
-const SQL = `-- O Monopolis · Supabase setup
-create table if not exists public.monopolis_games (
-  id uuid primary key default gen_random_uuid(),
-  code text unique not null,
-  state jsonb not null,
-  version integer not null default 1,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-alter table public.monopolis_games enable row level security;
-
-drop policy if exists "monopolis read" on public.monopolis_games;
-drop policy if exists "monopolis insert" on public.monopolis_games;
-drop policy if exists "monopolis update" on public.monopolis_games;
-
-create policy "monopolis read" on public.monopolis_games
-for select using (true);
-
-create policy "monopolis insert" on public.monopolis_games
-for insert with check (true);
-
-create policy "monopolis update" on public.monopolis_games
-for update using (true) with check (true);
-
-grant usage on schema public to anon, authenticated;
-grant select, insert, update on public.monopolis_games to anon, authenticated;
-
--- Si da error porque ya está añadida, ignóralo.
-alter publication supabase_realtime add table public.monopolis_games;`;
-
-function boot() {
-  $('sqlPreview').textContent = SQL;
+async function boot() {
   populateTokens();
-  loadConfigToInputs();
   bind();
-  initSupabase();
+  const serverReady = await initSupabase();
 
   const params = new URLSearchParams(location.search);
-  const join = params.get('join');
+  const join = normalizeGameCode(params.get('join') || '');
   if (join) {
-    $('joinCode').value = join.toUpperCase();
+    $('joinCode').value = join;
     switchMode('join');
   }
   const viewMode = params.get('view');
@@ -100,12 +67,15 @@ function boot() {
   }
 
   renderSetup();
+
+  // Se este navegador xa pertencía á partida, recuperámola sen pedir nada outra vez.
+  if (serverReady && join) await tryResumeGame(join);
 }
 
 function bind() {
-  $('saveConfigBtn').onclick = saveConfig;
   $('createGameBtn').onclick = createGame;
   $('joinGameBtn').onclick = joinGame;
+  $('copyCodeBtn').onclick = copyCode;
   $('copyLinkBtn').onclick = copyLink;
   $('nativeShareBtn').onclick = nativeShare;
   $('startGameBtn').onclick = startGame;
@@ -128,6 +98,10 @@ function bind() {
   $('soundBtn').onclick = toggleSound;
   $('tabCreate').onclick = () => switchMode('create');
   $('tabJoin').onclick = () => switchMode('join');
+  $('joinCode').addEventListener('input', () => {
+    const raw = $('joinCode').value.toUpperCase().replace(/\s+/g, '');
+    $('joinCode').value = raw.replace(/[^A-Z0-9-]/g, '').slice(0, 11);
+  });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
     if (e.key === ' ' && state?.phase === 'playing' && isMyTurn() && !state.hasRolled) {
@@ -171,38 +145,37 @@ function sanitizeSupabaseUrl(raw) {
     .replace(/\/+$/g, '');
 }
 
-function loadConfigToInputs() {
-  $('supabaseUrl').value = localStorage.getItem('monopolis.supabaseUrl') || '';
-  $('supabaseKey').value = localStorage.getItem('monopolis.supabaseKey') || '';
-}
+async function initSupabase() {
+  const cfg = window.OMONOPOLIS_CONFIG || {};
+  const url = sanitizeSupabaseUrl(cfg.SUPABASE_URL || '');
+  const key = String(cfg.SUPABASE_ANON_KEY || '').trim();
 
-function saveConfig() {
-  const url = sanitizeSupabaseUrl($('supabaseUrl').value);
-  const key = $('supabaseKey').value.trim();
-  $('supabaseUrl').value = url;
-  localStorage.setItem('monopolis.supabaseUrl', url);
-  localStorage.setItem('monopolis.supabaseKey', key);
-  initSupabase();
-  haptic(18);
-  playSfx('ok');
-  toast('Conexión gardada');
-}
-
-function initSupabase() {
-  const url = sanitizeSupabaseUrl(localStorage.getItem('monopolis.supabaseUrl') || '');
-  const key = localStorage.getItem('monopolis.supabaseKey') || '';
   if (!url || !key || !window.supabase) {
     client = null;
-    setConnection('sen configurar', 'muted');
+    setConnection('servidor non dispoñible', 'error');
+    console.error('O Monopolis: falta configurar SUPABASE_URL / SUPABASE_ANON_KEY en config.js');
     return false;
   }
+
   try {
     client = window.supabase.createClient(url, key);
+    setConnection('conectando...', 'muted');
+
+    const { data: sessionData, error: sessionError } = await client.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    if (!sessionData?.session) {
+      const { error: authError } = await client.auth.signInAnonymously();
+      if (authError) throw authError;
+    }
+
     setConnection('listo', 'online');
     return true;
-  } catch {
+  } catch (err) {
     client = null;
-    setConnection('erro config', 'error');
+    setConnection('erro de acceso', 'error');
+    console.error('O Monopolis: erro ao iniciar sesión anónima en Supabase', err);
+    toast('Non se puido iniciar a sesión do xogo');
     return false;
   }
 }
@@ -221,8 +194,25 @@ function renderSetup() {
   showView('setupView');
 }
 
-function code() {
-  return `PIOR-${Math.floor(1000 + Math.random()*9000)}`;
+function normalizeGameCode(value='') {
+  const clean = String(value).trim().toUpperCase().replace(/\s+/g, '');
+  if (/^\d{4,6}$/.test(clean)) return `PIOR-${clean}`;
+  return clean;
+}
+
+function friendlyServerError(error) {
+  const msg = String(error?.message || error || '');
+  if (msg.includes('PARTIDA_NON_ATOPADA')) return 'Partida non atopada';
+  if (msg.includes('PARTIDA_XA_COMEZOU')) return 'A partida xa empezou';
+  if (msg.includes('FICHA_OCUPADA')) return 'Esa ficha xa está collida';
+  if (msg.includes('PARTIDA_CHEA')) return 'A partida xa ten 8 xogadores';
+  if (msg.includes('FICHA_NON_VALIDA')) return 'Ficha non válida';
+  if (msg.includes('VERSION_CONFLICT')) return 'A partida cambiou noutro dispositivo';
+  if (msg.includes('AUTH_REQUIRED')) return 'Non hai sesión válida no servidor';
+  if (msg.includes('HOST_ONLY')) return 'Só o host pode facer esa acción';
+  if (msg.includes('MIN_PLAYERS_2')) return 'Fan falta polo menos 2 xogadores';
+  if (msg.includes('PLAYER_IDENTITY_IMMUTABLE')) return 'A lista de xogadores cambiou; actualiza a partida';
+  return 'Erro de servidor. Volve tentalo.';
 }
 
 function shuffle(arr) {
@@ -290,63 +280,87 @@ function normalizeState(s) {
 }
 
 async function createGame() {
-  if (!client && !initSupabase()) return toast('Configura Supabase primeiro');
+  if (!client && !(await initSupabase())) return toast('Non se puido conectar co servidor');
   const name = $('createName').value.trim() || 'Xogador';
   const token = $('createToken').value;
   const payload = newState(name, token);
 
   setConnection('creando...', 'muted');
-  for (let attempt=0; attempt<7; attempt++) {
-    const c = code();
-    const { data, error } = await client.from(TABLE).insert({ code:c, state:payload }).select().single();
-    if (!error && data) {
-      gameRow = data;
-      state = normalizeState(data.state);
-      localStorage.setItem(`monopolis.${c}.playerId`, myPlayerId);
-      await subscribe(data.id);
-      history.replaceState(null, '', `${location.pathname}?join=${c}`);
-      renderLobby();
-      playSfx('win');
-      confettiBurst();
-      return;
-    }
-  }
-  setConnection('erro', 'error');
-  toast('Non se puido crear a partida. Revisa SQL / URL / anon key.');
-}
+  const { data, error } = await client
+    .rpc('monopolis_create_game', { p_state: payload, p_player_id: myPlayerId })
+    .single();
 
-async function joinGame() {
-  if (!client && !initSupabase()) return toast('Configura Supabase primeiro');
-  const c = $('joinCode').value.trim().toUpperCase();
-  const name = $('joinName').value.trim() || 'Xogador';
-  const token = $('joinToken').value;
-  if (!c) return toast('Falta o código');
-
-  setConnection('buscando...', 'muted');
-  const { data, error } = await client.from(TABLE).select('*').eq('code', c).single();
   if (error || !data) {
-    setConnection('non atopada', 'error');
-    return toast('Partida non atopada');
+    setConnection('erro', 'error');
+    console.error('Erro creando partida', error);
+    return toast(friendlyServerError(error));
   }
 
   gameRow = data;
   state = normalizeState(data.state);
+  localStorage.setItem(`monopolis.${data.code}.playerId`, myPlayerId);
+  await subscribe(data.id);
+  history.replaceState(null, '', `${location.pathname}?join=${data.code}`);
+  renderLobby();
+  playSfx('win');
+  confettiBurst();
+}
 
-  const existing = state.players.find(p => p.id === myPlayerId);
-  if (!existing) {
-    if (state.phase !== 'lobby') return toast('A partida xa empezou');
-    if (state.players.some(p => p.token === token)) return toast('Esa ficha xa está collida');
-    state.players.push({ id: myPlayerId, name, token, money: START_MONEY, position:0, skipTurns:0, keptCards:[], connectedAt: Date.now() });
-    log(`${name} entrou na partida`);
-    const ok = await saveState('Entrando...');
-    if (!ok) return toast('Conflito ao entrar, volve tentar');
+async function joinGame() {
+  if (!client && !(await initSupabase())) return toast('Non se puido conectar co servidor');
+  const c = normalizeGameCode($('joinCode').value);
+  const name = $('joinName').value.trim() || 'Xogador';
+  const token = $('joinToken').value;
+  if (!c) return toast('Falta o código');
+  $('joinCode').value = c;
+
+  setConnection('entrando...', 'muted');
+  const { data, error } = await client
+    .rpc('monopolis_join_game', {
+      p_code: c,
+      p_player_id: myPlayerId,
+      p_name: name,
+      p_token: token
+    })
+    .single();
+
+  if (error || !data) {
+    setConnection('non se puido entrar', 'error');
+    console.error('Erro entrando na partida', error);
+    return toast(friendlyServerError(error));
   }
 
+  gameRow = data;
+  state = normalizeState(data.state);
   localStorage.setItem(`monopolis.${c}.playerId`, myPlayerId);
   await subscribe(gameRow.id);
   history.replaceState(null, '', `${location.pathname}?join=${c}`);
-  renderLobby();
+  render();
   playSfx('ok');
+}
+
+async function tryResumeGame(c) {
+  if (!client || !localStorage.getItem(`monopolis.${c}.playerId`)) return false;
+
+  setConnection('recuperando...', 'muted');
+  const { data, error } = await client.from(TABLE).select('*').eq('code', c).maybeSingle();
+  if (error || !data) {
+    setConnection('listo', 'online');
+    return false;
+  }
+
+  const restored = normalizeState(data.state);
+  if (!restored.players.some(p => p.id === myPlayerId)) {
+    setConnection('listo', 'online');
+    return false;
+  }
+
+  gameRow = data;
+  state = restored;
+  await subscribe(data.id);
+  render();
+  toast('Partida recuperada');
+  return true;
 }
 
 async function subscribe(gameId) {
@@ -390,23 +404,29 @@ function disconnect() {
 }
 
 async function saveState(pending='Gardando...') {
-  if (!gameRow) return false;
+  if (!gameRow || !client) return false;
   setConnection(pending, 'muted');
-  const nextVersion = (gameRow.version || 1) + 1;
-  const { data, error } = await client.from(TABLE)
-    .update({ state, version: nextVersion, updated_at: new Date().toISOString() })
-    .eq('id', gameRow.id)
-    .eq('version', gameRow.version || 1)
-    .select()
+
+  const { data, error } = await client
+    .rpc('monopolis_save_game', {
+      p_game_id: gameRow.id,
+      p_expected_version: gameRow.version || 1,
+      p_state: state
+    })
     .single();
 
   if (error || !data) {
     setConnection('conflito', 'error');
-    const fresh = await client.from(TABLE).select('*').eq('id', gameRow.id).single();
+    console.warn('Conflito/erro gardando partida', error);
+    const fresh = await client.from(TABLE).select('*').eq('id', gameRow.id).maybeSingle();
     if (fresh.data) {
       gameRow = fresh.data;
       state = normalizeState(fresh.data.state);
       render();
+    }
+    if (error) {
+      const isConflict = String(error.message || '').includes('VERSION_CONFLICT');
+      toast(isConflict ? 'A partida actualizouse noutro móbil. Repite a acción.' : friendlyServerError(error));
     }
     return false;
   }
@@ -433,7 +453,9 @@ function isMyTurn() { const p = currentPlayer(); return p?.id === myPlayerId && 
 function renderLobby() {
   showView('lobbyView');
   $('lobbyCode').textContent = gameRow.code;
+  $('lobbyCount').textContent = `${state.players.length}/8`;
   $('startGameBtn').disabled = !isHost() || state.players.length < 2;
+  $('startGameBtn').textContent = isHost() ? 'Comezar partida' : 'Agardando ao host…';
   $('lobbyPlayers').innerHTML = state.players.map(p => {
     const tok = tokenEmoji(p.token);
     const host = p.id === state.hostId ? '<span class="badge gold">host</span>' : '';
@@ -446,17 +468,30 @@ function renderLobby() {
 }
 
 function renderQrLike(text) {
-  let seed = 0;
-  for (const ch of text) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
-  const dots = [];
-  for (let i=0; i<225; i++) {
-    const x = i % 15, y = Math.floor(i / 15);
-    const finder = (x<4 && y<4) || (x>10 && y<4) || (x<4 && y>10);
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    const on = finder || (seed % 7 < 3);
-    dots.push(`<span class="qr-dot" style="opacity:${on ? 1 : 0}"></span>`);
+  const el = $('qrCanvas');
+  el.innerHTML = '';
+
+  if (window.QRCode) {
+    new window.QRCode(el, {
+      text,
+      width: 170,
+      height: 170,
+      correctLevel: window.QRCode.CorrectLevel.M
+    });
+    return;
   }
-  $('qrCanvas').innerHTML = `<div class="qr-like-grid">${dots.join('')}</div>`;
+
+  // A ligazón segue dispoñible aínda que a libraría QR non cargue.
+  el.innerHTML = '<span class="muted">QR non dispoñible</span>';
+}
+
+function copyCode() {
+  const c = gameRow?.code || '';
+  if (!c) return;
+  navigator.clipboard?.writeText(c);
+  toast('Código copiado');
+  haptic(18);
+  playSfx('ok');
 }
 
 function gameLink() {

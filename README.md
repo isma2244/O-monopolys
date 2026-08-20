@@ -1,3 +1,25 @@
+# ⚠️ V6 · configuración actual
+
+Esta versión usa **Supabase Auth anónimo + RLS por membresía + RPC seguras**. Antes de publicar, activa **Authentication → Anonymous Sign-Ins** en Supabase y ejecuta `SUPABASE_V6_SECURITY.sql` (o `supabase-schema.sql`) en SQL Editor. No uses el esquema de V5.
+
+Consulta `README_V6.md` para el flujo exacto.
+
+---
+
+# O Monopolis · V5 Friendly
+
+Esta variante elimina a configuración de Supabase da interface dos xogadores.
+
+## Único paso antes de publicar
+
+Edita `config.js` e pega o **Project URL** e a **anon/publishable key** do teu proxecto Supabase. Esa clave está pensada para clientes públicos; non uses nunca `service_role` nin unha secret key.
+
+Despois, os xogadores só verán **Crear partida** ou **Unirse**, co código de partida e o seu nome.
+
+Tamén se substituíu o QR decorativo da V5 por un QR escaneable que apunta á ligazón `?join=CODIGO`.
+
+---
+
 # O Monopolis · V5 Robusta y Profesional
 
 Versión completamente refactorizada con enfoque en robustez, idempotencia y prevención de errores.

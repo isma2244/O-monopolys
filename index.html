@@ -45,27 +45,10 @@
           </div>
         </div>
 
-        <div class="grid two">
+        <div class="grid">
           <div class="card stack">
             <div class="section-title">
-              <span class="num">1</span>
-              <div>
-                <h3>Conexión Supabase</h3>
-                <p>Pega Project URL e anon public key. Queda gardado no dispositivo.</p>
-              </div>
-            </div>
-            <label>SUPABASE_URL<input id="supabaseUrl" placeholder="https://xxxx.supabase.co" autocomplete="off" /></label>
-            <label>SUPABASE_ANON_KEY<input id="supabaseKey" placeholder="eyJ..." autocomplete="off" /></label>
-            <button id="saveConfigBtn" class="secondary">Gardar conexión</button>
-            <details>
-              <summary>SQL necesario</summary>
-              <pre id="sqlPreview"></pre>
-            </details>
-          </div>
-
-          <div class="card stack">
-            <div class="section-title">
-              <span class="num">2</span>
+              <span class="num">🎮</span>
               <div>
                 <h3>Partida</h3>
                 <p>Fai de host ou entra nunha partida existente.</p>
@@ -84,7 +67,7 @@
             </div>
 
             <div id="joinBox" class="stack hidden">
-              <label>Código<input id="joinCode" placeholder="PIOR-1234" /></label>
+              <label>Código<input id="joinCode" placeholder="PIOR-123456" inputmode="text" autocomplete="off" /></label>
               <label>Teu nome<input id="joinName" placeholder="Joseba" /></label>
               <label>Ficha<select id="joinToken"></select></label>
               <button id="joinGameBtn">Entrar na partida</button>
@@ -97,9 +80,11 @@
         <div class="lobby-grid">
           <div class="card lobby-card stack">
             <p class="small">Código da partida</p>
-            <div class="code-display" id="lobbyCode">PIOR-0000</div>
+            <div class="code-display" id="lobbyCode">PIOR-000000</div>
+            <div class="lobby-meta"><span class="badge gold"><span id="lobbyCount">1/8</span> xogadores</span><span class="badge">🔒 acceso por código</span></div>
             <p class="muted">Comparte este código ou a ligazón. Cando esteades todos, o host empeza a partida.</p>
             <div class="actions">
+              <button id="copyCodeBtn" class="secondary">Copiar código</button>
               <button id="copyLinkBtn" class="secondary">Copiar ligazón</button>
               <button id="nativeShareBtn" class="secondary">Compartir</button>
             </div>
@@ -269,6 +254,8 @@
 
   <div id="toast"></div>
 
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

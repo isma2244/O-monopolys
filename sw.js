@@ -1,4 +1,4 @@
-const CACHE = 'o-monopolis-v5-0-robusta-20260801-1';
+const CACHE = 'o-monopolis-v6-secure-20260820-1';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './app.js',
   './data.js',
   './manifest.json',
+  './config.js',
   './assets/board.jpg',
   './assets/icon-192.png',
   './assets/icon-512.png'

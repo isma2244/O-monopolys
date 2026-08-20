@@ -205,6 +205,7 @@ main { width:min(1440px, 100%); margin:0 auto; padding:16px 16px calc(18px + var
 
 .lobby-grid { display:grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap:16px; }
 .lobby-card { text-align:center; }
+.lobby-meta { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:10px; }
 .code-display {
   font-size: clamp(38px, 7vw, 72px);
   letter-spacing:.02em;

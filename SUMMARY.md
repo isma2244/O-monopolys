@@ -1,3 +1,9 @@
+# Nota V6
+
+La seguridad y el flujo de conexión han cambiado. La referencia vigente es `README_V6.md` + `SUPABASE_V6_SECURITY.sql`. Cualquier descripción anterior de políticas abiertas de V5 queda obsoleta.
+
+---
+
 # 📋 RESUMEN EJECUTIVO · O Monopolis V5
 
 ## Estado del Proyecto
